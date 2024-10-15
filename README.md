@@ -1,31 +1,13 @@
 # Instructions for pre-training llama2 7b using NeMo on GKE
 
-# Use exactly 2 x A3 mega VMs per CE only, in asia-northeast1-b zone
-
-## ***Objective***
-### *By following this lab, you will be able to deploy a A3 GKE Slurm cluster to run a llama2 pre-training job using Nvidia NeMo framework*
-
-## ***Prerequisites***
-
-### *This user guide assumes that you are familiar with Kubernetes concepts such as pod, node, deployment, namespaces etc and are familiar with GKE concepts such as nodepools, autoscaling, and auto provisioning.*
-
-## ***Provisioning a GKE cluster***
-
-### *This section shows how to create a cluster which has two NodePools:*
-- The default NodePool contains 3 nodes with e2-medium machine type.
-- The a3-multi-nic NodePool contains 2 nodes with a3-megagpu-8g machine type (8 H100 GPU per node), and supports TCPXO and GKE multi-networking).
-- Steps are extracted from latest External User Guide as of July 2024:
-[GKE A3 plus VM User Guide (Public Preview Customers)](https://docs.google.com/document/d/1D5umT4-WDuNnYf3ieQ5SfLdmvGRPBQGLB662udzwz8I/edit?tab=t.0#heading=h.n4ytmbxt737h)
-
-
 ## Step 1: Setup Network (Create VPCs, subnets and firewall rules)
 ### *Set environment variables*
 ```
-export PREFIX="<yourLdap>"
-export REGION="asia-northeast1"
-export ZONE="asia-northeast1-b"
+export PREFIX="<VPC_PREFIX>"
+export REGION="<REGION_NAME>"
+export ZONE="<ZONE_NAME>"
 export MTU=8896
-export PROJECT="injae-sandbox-340804"
+export PROJECT="<PROJECT_ID>"
 ```
 ### Create VPC and subnets
 ```
@@ -53,10 +35,11 @@ done
 > Note: Subnets are configured with /24 range, which has space for 256 IPs. You should explicitly choose the range that fits your needs. If your cluster will have more than 1K nodes, consider a range with more spaces (e.g /21 for 2048 IPs)
 
 ## Step 2: Create a GKE Cluster
+`skip this step if using self-built K8s cluster`
 
 ```
 export GKE_VERSION=1.30.3-gke.1969001
-export CLUSTER_NAME="<yourLdap>"
+export CLUSTER_NAME="<GKE_CLUSTER_NAME>"
 
 gcloud --project ${PROJECT} beta container clusters create ${CLUSTER_NAME} --enable-dataplane-v2 --enable-ip-alias --region ${REGION} --node-locations ${ZONE} --enable-multi-networking --cluster-version ${GKE_VERSION} --no-enable-autoupgrade
 ```
@@ -64,6 +47,7 @@ gcloud --project ${PROJECT} beta container clusters create ${CLUSTER_NAME} --ena
 > Note: `--region` by specifying this flag, the GKE cluster will be a regional cluster. Compared with zonal clusters (`--zone`), regional clusters have more default node quota (5k v.s. 1k), and have [additional advantages](https://cloud.google.com/kubernetes-engine/docs/concepts/regional-clusters).
 
 ## Step 3: Create a A3 Mega VM Nodepool
+`skip this step if using self-built K8s cluster`
 ### *Set the EV*
 ```
 export NODE_POOL_NAME="a3plus-multi-nic"
@@ -268,7 +252,7 @@ gsutil mb -l asia-northeast1 gs://<yourLdap>-nemo
 Update the value for `gcsBucketForDataCataPath: <yourLdap-nemo>` within `nemo-on-k8s/helm-context/values.yaml` with the name of your bucket above.
 
 ## Step 3: Deploy your training job to GKE
-
+`skip this step if using self-built K8s cluster`
 From the `nemo-on-k8s` directory, submit a new job using Helm. Here is a [Link to installing Helm if you don't have it](https://helm.sh/docs/intro/install/).
 
 ```
@@ -451,12 +435,13 @@ Modify your NeMo training config in `values.yaml` or directly on the linked file
 Please please delete your VPCs and GKE clusters once the labs are finished
 
 ### Delete GKE Cluster:
+`skip this step if using self-built K8s cluster`
 ```
-export PREFIX="<yourLdap>"
-export REGION="asia-northeast1"
-export ZONE="asia-northeast1-b"
-export PROJECT="injae-sandbox-340804"
-export CLUSTER_NAME="<yourLdap>"
+export PREFIX="<VPC_PREFIX>"
+export REGION="<REGION_NAME>"
+export ZONE="<ZONE_NAME>"
+export PROJECT="<PROJECT_ID>"
+export CLUSTER_NAME="<GKE_CLUSTER_NAME>"
 ```
 ```
 gcloud --project ${PROJECT} beta container clusters delete ${CLUSTER_NAME} --region ${REGION}
