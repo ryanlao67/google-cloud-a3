@@ -246,7 +246,7 @@ For NeMo to run a pretraining job, it needs to generate an index of the dataset 
 
 ```
 # Create a new unique bucket in same location as the GKE cluster
-gsutil mb -l asia-northeast1 gs://<GCS_BUCKET>-nemo
+gsutil mb -l <REGION_NAME> gs://<GCS_BUCKET>-nemo
 ```
 
 Update the value for `gcsBucketForDataCataPath: <GCS_BUCKET-nemo>` within `nemo-on-k8s/helm-context/values.yaml` with the name of your bucket above.
