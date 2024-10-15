@@ -246,10 +246,10 @@ For NeMo to run a pretraining job, it needs to generate an index of the dataset 
 
 ```
 # Create a new unique bucket in same location as the GKE cluster
-gsutil mb -l asia-northeast1 gs://<yourLdap>-nemo
+gsutil mb -l asia-northeast1 gs://<GCS_BUCKET>-nemo
 ```
 
-Update the value for `gcsBucketForDataCataPath: <yourLdap-nemo>` within `nemo-on-k8s/helm-context/values.yaml` with the name of your bucket above.
+Update the value for `gcsBucketForDataCataPath: <GCS_BUCKET-nemo>` within `nemo-on-k8s/helm-context/values.yaml` with the name of your bucket above.
 
 ## Step 3: Deploy your training job to GKE
 `skip this step if using self-built K8s cluster`
@@ -262,7 +262,7 @@ helm install <jobName> helm-context/
 If successful, you should see an output similar to below
 
 ```
-walk.go:74: found symbolic link in path: /usr/local/google/home/ikwak/Downloads/a3-bootcamp-ce/Day1/pretraining-with-nemo-on-gke/nemo-on-k8s/helm-context/selected-configuration.yaml resolves to /usr/local/google/home/ikwak/Downloads/a3-bootcamp-ce/Day1/pretraining-with-nemo-on-gke/nemo-on-k8s/helm-context/nemo-configurations/llama2-7b.yaml. Contents of linked file included and used
+walk.go:74: found symbolic link in path: /usr/local/.../nemo-on-k8s/helm-context/selected-configuration.yaml resolves to /usr/local/.../nemo-on-k8s/helm-context/nemo-configurations/llama2-7b.yaml. Contents of linked file included and used
 NAME: llama2-train
 LAST DEPLOYED: Fri Jul 26 12:05:53 2024
 NAMESPACE: default
@@ -286,7 +286,7 @@ Get the name of the first pod and stream the logs into your local terminal eg. `
 
 If successful, you should see NCCL creating a distributed group across the 16 GPU ranks across 2 nodes, and NeMo creating and loading an index of the dataset for the training task.
 
-**For the first run, it will take approx 7-8 min to build the index into the gcsfuse mounted bucket (You can also check the content of the bucket in GCS console to see the index files being created under gs://*yourLdap-nemo*/nemo_index). Note that the index will be created again if the sequence length, global batch size or max steps are changed**
+**For the first run, it will take approx 7-8 min to build the index into the gcsfuse mounted bucket (You can also check the content of the bucket in GCS console to see the index files being created under gs://*GCS_BUCKET-nemo*/nemo_index). Note that the index will be created again if the sequence length, global batch size or max steps are changed**
 
 ```
 kubectl logs -f llama2-train-0-cks86
@@ -412,22 +412,10 @@ Waiting on Torch PID 676
 Waiting on Torch PID 677
 Waiting on Torch PID 678
 Waiting on Torch PID 679
-Pod on gke-apacaiinfra-a3plus-multi-nic-a7c5e69e-lhwh.asia-northeast1-b.c.injae-sandbox-340804.internal is exiting at Fri Jul 26 12:16:35 UTC 2024 
+Pod on gke-apacaiinfra-a3plus-multi-nic-a7c5e69e-lhwh.xxx.internal is exiting at Fri Jul 26 12:16:35 UTC 2024 
 ```
 ### Note the value for your job's "train_step_timing in s=xx.xx"
 This is the key information for determining training throughput. This indicates it took 46.00 seconds (above) for every step in the training pass using your configs. This can be used to measure and compare performance across clusters and models by converting to tokens/sec/GPU throughput or used to calculate the MFU.
-
----
-
-## ***Performance Tune and set a High Score!***
-
-Modify your NeMo training config in `values.yaml` or directly on the linked file `selected-configuration.yaml` to performance tune your job and increase the training throughput result.
-
-[Make a copy of this benchmark template](https://docs.google.com/spreadsheets/d/1VDaQ9reMmWr9FHowzOy_0_Iwxkg1Bwo5vIPeb1yqXqA/edit?resourcekey=0-G0uKUN05DynsJBKkRCJUAg&gid=1344899973#gid=1344899973) and put in your `train_step_timing` value to see your throughput (Tokens/sec/GPU) and the corresponding MFU.
-
-- ikwak@ highscore: 16,082 tokens/sec/GPU with 38.86% MFU with 16 GPUs
-
-`Protip: To identify how much headroom is available on your GPU for further optimisation, observe the real time GPU utilisation rate on your GPU nodes from the Job dashboard within the GKE console page. If you still have unused GPU memory, you can tune further eg. Increase micro_batch_size, bucket sizes, down quant precision type..` 
 
 ---
 # **Cleaning up resources**
