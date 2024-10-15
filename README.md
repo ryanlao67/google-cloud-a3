@@ -209,7 +209,7 @@ This section shows how to configure and run the NeMo scripts using [Helm](https:
 Take a look at the directory layout
 
 ```
-ikwak@penguin:~/a3-bootcamp-ce/Day1/pretraining-with-nemo-on-gke$ tree nemo-on-k8s/
+$ tree nemo-on-k8s/
 nemo-on-k8s/
 ├── docker
 │   └── Dockerfile
